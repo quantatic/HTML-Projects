@@ -1,0 +1,117 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>A Boucing Ball Affected by Gravity</title>
+    </head>
+
+    <body>
+        <select id="fuckAidan" onchange="update()">
+          <option value="15">15 FPS</option>
+          <option value="30">30 FPS</option>
+          <option selected value="60">60 FPS</option>
+          <option value="120">120 FPS</option>
+        </select>
+        <canvas id="myCanvas" height="500" width="500">Get a better Browser</canvas>
+        <script>
+            var canvas = document.getElementById("myCanvas");
+            var ctx = canvas.getContext("2d");
+            canvas.height = window.innerHeight - 32;
+            canvas.width = window.innerWidth - 32;
+//            canvas.height = 500;
+            
+            var height = canvas.height;
+            var width = canvas.width;
+            var gravity = 1;
+            var ball = new Ball();
+            var fps = document.getElementById("fuckAidan").value;
+//            var interval = setInterval(step, 1000/fps);
+            window.requestAnimationFrame(step);
+            
+            function Ball(){    
+                this.fill = "green";
+                this.vx = 8;
+                this.vy = 0;
+                this.bounceFactor = 0.90;
+                this.x = width / 2;
+                this.y = 100;
+                this.radius = 25;
+                
+                this.draw = function(){
+                    ctx.fillStyle = this.fill;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.closePath();
+                    ctx.fill();
+                }   
+            }
+            
+//            function update(){
+//                fps = document.getElementById("fuckAidan").value;
+//                clearInterval(interval);
+//                interval = setInterval(step, 1000/fps);
+//            }
+            
+           
+            
+            function step(){
+                ball.vy += gravity;
+                ball.y += ball.vy;
+                ball.x += ball.vx;
+                
+                ctx.clearRect(0, 0, width, height);
+                if(ball.y + ball.radius > height){
+                    ball.vy *= -ball.bounceFactor;
+                    ball.vx *= .98;
+                    ball.y = height - ball.radius;
+                    
+//                    if(Math.abs(ball.vy) > 2){
+//                        ball.fill = randomColor();
+//                    }
+                }else if(ball.y - ball.radius <= 0){
+                    ball.vy *= -ball.bounceFactor;
+                    ball.y = 0 + ball.radius;
+                    //ball.fill = randomColor();
+                }
+                
+                if(ball.x - ball.radius < 0){
+                    ball.vx *= -1;
+                    ball.x = ball.radius;
+                }
+                
+                if(ball.x + ball.radius > width){
+                    ball.vx *= -1;
+                    ball.x = width - ball.radius;
+                }
+                
+                ball.draw();
+                window.requestAnimationFrame(step);
+            }
+            
+            function randomNumber(min, max){
+                return Math.floor(Math.random() * (max - min + 1)) + min;    
+            }
+            
+            function randomColor(){
+                return "rgb(" + randomNumber(0, 255) + "," + randomNumber(0, 255) + "," + randomNumber(0, 255) + ")";
+            }
+        
+        </script>
+        
+        <style>
+            html {
+                background-color: lightgray;
+            }
+            
+            canvas {
+                background-color: white;
+                border: 1px solid black;
+            }
+        
+        
+        </style>
+    
+    
+    </body>
+
+
+</html>

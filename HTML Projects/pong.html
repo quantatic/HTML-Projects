@@ -1,0 +1,135 @@
+<!DOCTYPE HTML>
+<html>
+
+    <head>
+        <title>A Pong Game</title>
+    </head>
+
+    <body>
+        <canvas id="myCanvas">Get a new Browser</canvas>
+        <script>
+            
+            /*
+                Notes:
+                Angles work just like the unit circle
+            
+            */
+            var canvas = document.getElementById("myCanvas");
+            var ctx = canvas.getContext("2d");
+
+            var height = window.innerHeight - 32;
+            var width = window.innerWidth - 32;
+            canvas.height = height;
+            canvas.width = width;
+
+            var paddleHeight = 128;
+            var paddleWidth = 10;
+            var ballSize = 16;
+            var ballSpeed = 5;
+            
+            var playerPaddle = new Paddle(0, height / 2 - paddleHeight / 2); //creates the player's paddle
+            var ball = new Ball(width / 2, height / 2, 225);
+            
+            var keys = [];
+            var paddleMoveSpeed = 8;
+
+            setInterval(step, 1000/30);
+
+            document.body.addEventListener("keydown", updateKeysDown);
+            document.body.addEventListener("keyup", updateKeysUp);
+
+            function Paddle(x, y){
+                this.x = x;
+                this.y = y;
+            }
+            
+            function Ball(x, y, angle){
+                this.x = x;
+                this.y = y;
+                this.angle = angle;
+            }
+
+
+
+            function step(){
+                draw();
+                movePlayerPaddle();
+                moveBall();
+            }
+
+            function drawPaddleOne(){
+                ctx.fillStyle = "black";
+                ctx.fillRect(0, playerPaddle.y, paddleWidth, paddleHeight);
+            }
+            
+            function drawBall(){
+                ctx.fillStyle = "red";
+                ctx.fillRect(ball.x, ball.y, ballSize, ballSize);
+            }
+
+            function draw(){
+                ctx.clearRect(0, 0, width, height);
+                drawPaddleOne();
+                drawBall();
+            }
+
+            function movePlayerPaddle(){
+                if(keys[87]) { //if W pressed, move up
+                    playerPaddle.y -= paddleMoveSpeed;
+                }
+                if(keys[83]){ //if S pressed, move down
+                        playerPaddle.y += paddleMoveSpeed;
+                }
+                if(playerPaddle.y < 0){
+                    playerPaddle.y = 0;    
+                }
+                if(playerPaddle.y > height - paddleHeight){
+                   playerPaddle.y = height - paddleHeight;
+                }
+            }
+            
+            function moveBall(){
+                
+                if(ball.x <= 0 || ball.x + ballSize >= width){
+                    ball.angle = convertToDegrees(Math.atan2(Math.sin(convertToDegrees(ball.angle)), -Math.cos(convertToRadians(ball.angle))));
+                }
+                if(ball.y <= 0 || ball.y + ballSize >= height){ //focus on fixing bugs with this!!!
+                    ball.angle = convertToDegrees(Math.atan2(-Math.sin(convertToDegrees(ball.angle)), Math.cos(convertToRadians(ball.angle))));
+                }
+                
+                ball.x += Math.cos(convertToRadians(ball.angle)) * ballSpeed;
+                ball.y -= Math.sin(convertToRadians(ball.angle)) * ballSpeed;
+            }
+
+            function updateKeysDown(e) {
+                keys[e.keyCode] = true;
+            }
+
+            function updateKeysUp(e){
+                keys[e.keyCode] = false;
+            }
+            
+            function convertToRadians(angle){
+                return (angle * Math.PI) / 180;
+            }
+            
+            function convertToDegrees(angle){
+                return (angle * 180) / Math.PI;    
+            }
+        </script>
+
+        <style>
+            html {
+                background-color: lightgray;
+            }
+            
+            canvas {
+                background-color: white;
+                border: 1px solid black;
+            }
+        </style>
+
+    </body>
+
+
+</html>

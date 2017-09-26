@@ -1,0 +1,284 @@
+<!DOCTYPE HTML>
+<html>
+
+    <head>
+      <title>A Camera Test</title>
+    </head>
+
+    <body onload="init()">
+      <canvas id="myCanvas"></canvas>
+      <script>
+        var maxFood = 500;
+        var minimapScale = 16;
+        var lastLoop = new Date();
+        setInterval(step, 1000 / 60);
+        var scale = 100;
+        var camera = {
+          //                width: 16 * scale,
+          //                height: 9 * scale,
+          width: 16 * scale, //initializes the width of the screen, same as camera
+          height: 9 * scale, //initializes the height of the screen
+          mapWidth: 16 * scale * 4,
+          mapHeight: 16 * scale * 4,
+          minimapHeight: 9 * scale * 4 / minimapScale, //minimap is (minimpaScale) scale
+          minimapWidth: 16 * scale  * 4 / minimapScale, //minimap is still (minimapScale) scale
+          x: null,
+          y: null
+        };
+
+        var player = {
+          x: 500, //starts the player's x off at 250
+          y: 500, //starts the player's y off at 250
+          radius: 50,//gives the player a starting radius of 10
+          growTo: 50,
+          speed: 4, //the speed at which the player moves
+          canSplit: true,
+          canRejoin: true
+        };
+        
+        var mouse = {
+          x: null,
+          y: null
+        }
+        
+        function food(x, y, radius, color) { //constructor for a food object
+          this.x = x;
+          this.y = y;
+          this.radius = radius; //this refers to radius
+          this.color = color; //color of this food object
+        }
+
+        var canvas = document.getElementById("myCanvas");
+        var ctx = canvas.getContext('2d');
+
+        canvas.height = camera.height;
+        canvas.width = camera.width;
+        var foodArray = [new food(4000, 4000, 300, "purple")]; //initializes the food array
+        var playerArray = [player];
+        
+        function init(){ //called when the game first loads
+          canvas.onmousemove = updateMouse;
+          window.onkeydown = splitPlayer;
+          window.onkeyup = keyUp;
+          mouse.x = getRelativePlayerX(0); //starts the mouse on the player, so you don't move then the game starts
+          mouse.y = getRelativePlayerY(0); //starts the mouse on the player, so you don't move when the gaem starts
+        }
+        
+        function step() {
+          updatePlayer();
+          updateCamera();
+          checkCollisions();
+          addFood();
+          draw();
+          testFps();
+        }
+
+        function draw() { //the function which handles all of the drawing
+          ctx.clearRect(0, 0, camera.width, camera.height);
+          
+          for(var i = 0; i < foodArray.length; i++) {
+            if(foodArray[i].x + foodArray[i].radius >= camera.x && foodArray[i].x - foodArray[i].radius <= camera.x + camera.width && //if the object is on the screen at all
+              foodArray[i].y + foodArray[i].radius >= camera.y && foodArray[i].y - foodArray[i].radius <= camera.y + camera.height){
+              ctx.beginPath();
+              ctx.fillStyle = foodArray[i].color;
+              ctx.arc(foodArray[i].x - camera.x, foodArray[i].y - camera.y, foodArray[i].radius, 0, Math.PI * 2); //draws a circle for the food
+              ctx.fill();
+            }
+          }
+          ctx.beginPath();
+          ctx.fillStyle = "green"; //the drawing color of the player
+          for(var i = 0; i < playerArray.length; i++){
+            ctx.moveTo(getRelativePlayerX(i), getRelativePlayerY(i));
+            ctx.arc(getRelativePlayerX(i), getRelativePlayerY(i), playerArray[i].radius, 0, Math.PI * 2); //draws each player partition
+          }
+          ctx.fill();
+          ctx.save();
+          ctx.fillStyle = "black";
+          ctx.globalAlpha = 0.2;
+          ctx.fillRect(0, 0, camera.minimapWidth, camera.minimapWidth); //drawing individually gets to ~1500 before bad lag, drawing together gets to ~3000
+          for(var i = 0; i < foodArray.length; i++){
+            ctx.beginPath();
+            ctx.fillStyle = foodArray[i].color;
+            ctx.arc(foodArray[i].x / minimapScale, foodArray[i].y / minimapScale, foodArray[i].radius / minimapScale , 0, 2 * Math.PI);
+            ctx.fill();
+          }
+          ctx.globalAlpha = 0.75;
+          ctx.fillStyle = "green";
+          ctx.beginPath();
+          for(var i = 0; i < playerArray.length; i++){
+            ctx.moveTo(playerArray[i].x / minimapScale, playerArray[i].y / minimapScale);
+            ctx.arc(playerArray[i].x / minimapScale, playerArray[i].y / minimapScale, playerArray[i].radius / minimapScale, 0, 2 * Math.PI);
+          }
+          ctx.fill();
+          ctx.restore();
+          ctx.globalAlpha = 1;
+        }
+
+        function updateCamera() {
+          if(playerArray[0].x > camera.width / 2 && playerArray[0].x < camera.mapWidth - camera.width / 2){ //don't move the camera if it's out of bounds
+            camera.x = playerArray[0].x - (camera.width / 2); //called every frame, updates the camera to center on the player.
+          }
+          
+          if(playerArray[0].y > camera.height / 2 && playerArray[0].y < camera.mapHeight - camera.height / 2){ //don't move the camera if it's out of bounds
+            camera.y = playerArray[0].y - (camera.height / 2);
+          }
+        }
+        
+        function updateMouse(e){
+          var rect = canvas.getBoundingClientRect(); //a useful trick to get the real mouse poition, relative to the canvas
+          var mouseX = e.pageX - rect.left;
+          var mouseY = e.pageY - rect.top;
+          mouse.x = mouseX; //updates the mouse variable to be the mouse position
+          mouse.y = mouseY; //updates the mouse variable to be the mouse position
+        }
+        
+        function updatePlayer(){
+          for(var i = 0; i < playerArray.length; i++){ //updating all players
+            if(playerArray[i].radius <= playerArray[i].growTo){
+              playerArray[i].radius += (playerArray[i].growTo - playerArray[i].radius) / 10; //makes it so that the player grows slowly
+              while(!isInBoundsX(playerArray[i])){ //if we grew so that we're out of bounds in the x direction, fix that
+                if(playerArray[i].x - playerArray[i].radius <= 0){
+                  playerArray[i].x ++;
+                }else{
+                  playerArray[i].x --;
+                }
+              }
+              while(!isInBoundsY(playerArray[i])){ //if we grew so that we're out of bounds in the y direction, fix that
+                if(playerArray[i].y - playerArray[i].radius <= 0){
+                  playerArray[i].y ++;
+                }else{
+                  playerArray[i].y --;
+                }
+              }
+            }if(playerArray[i].radius + 2 >= playerArray[i].growTo){
+              playerArray[i].radius = playerArray[i].growTo;
+            }
+            
+            for(var j = 0; j < playerArray.length; j++){
+              if(j != i){
+                while(Math.sqrt(Math.pow(playerArray[i].x - playerArray[j].x, 2) + Math.pow(playerArray[i].y - playerArray[j].y, 2)) < playerArray[i].radius + playerArray[j].radius){
+                  if(playerArray[i].x > playerArray[j].x){
+                    playerArray[i].x++;
+                  }else{
+                    playerArray[i].x--;
+                  }
+                  
+                  if(playerArray[i].y > playerArray[j].y){
+                    playerArray[i].y++;
+                  }else{
+                    playerArray[i].y--;
+                  }
+                }
+              }
+            }
+
+            if(Math.sqrt((getRelativePlayerX(i) - mouse.x) * (getRelativePlayerX(i) - mouse.x) + (getRelativePlayerY(i) - mouse.y) * (getRelativePlayerY(i) - mouse.y)) > Math.min(playerArray[i].radius, 150)){ //only move if mouse isn't touching player
+              var xDif = mouse.x - (playerArray[i].x - camera.x); //get the difference in x values
+              var yDif = -1 * (mouse.y - (playerArray[i].y - camera.y)); //get the difference in y values, multiply by -1 because y values are fucked
+              var angle = Math.atan2(yDif, xDif); //calculate the angle with trig
+              if(isInBoundsX({x: playerArray[i].x + Math.cos(angle) * playerArray[i].speed, radius: playerArray[i].radius})){ //if the move would keep the player in bounds in the x direction
+                playerArray[i].x += Math.cos(angle) * playerArray[i].speed; //move the player's x
+              }
+
+              if(isInBoundsY({y: playerArray[i].y - Math.sin(angle) * playerArray[i].speed, radius: playerArray[i].radius})){//if the move would keep the player in bounds in the y direction
+                playerArray[i].y -= Math.sin(angle) * playerArray[i].speed; //move the player's y, reversed because y values are fucked
+              }
+            }
+          }
+        }
+        
+        function checkCollisions(){
+          for(var i = 0; i < foodArray.length; i++){ //!!!!!!!!!!!!!!make sure to add a check here to only check food particles currently on screen!!!!!!!!!!!!!
+            for(var j = 0; j < playerArray.length; j++){
+              if(Math.sqrt(Math.pow(playerArray[j].x - foodArray[i].x, 2) + Math.pow(playerArray[j].y - foodArray[i].y, 2)) < playerArray[j].radius + foodArray[i].radius){
+                playerArray[j].growTo = Math.sqrt(Math.pow(playerArray[j].growTo, 2) + (Math.pow(foodArray[i].radius , 2) / 2));
+                foodArray.splice(i, 1);
+                checkCollisions();
+                return;
+              }
+            }
+          }
+        }
+        
+        function addFood(){
+          if(foodArray.length < 750){
+            var x;
+            var y;
+            var radius;
+            var color = randomColor();
+            do{
+              x = Math.random() * camera.mapWidth;
+              y = Math.random() * camera.mapHeight;
+              radius = Math.random() * 10 + 10;
+            }
+            while(!(isInBoundsX({x: x, y: y, radius: radius}) && isInBoundsY({x: x, y: y, radius: radius})));
+            foodArray.push(new food(x, y, radius, color));
+          }
+        }
+        
+        function getRelativePlayerX(idx){ //gets player x relative to the canvas
+          return playerArray[idx].x - camera.x;
+        }
+          
+        function getRelativePlayerY(idx){ //gets player y relative to the canvas
+          return playerArray[idx].y - camera.y;
+        }
+        
+        function randomColor(){ //a simple function that returns a random RGB color code
+          var color = "rgb(" + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + "," + Math.floor(Math.random() * 255) + ")";
+          return color;
+        }
+        
+        function isInBoundsX(object){
+          return object.x - object.radius > 0 && object.x + object.radius < camera.mapWidth; //return true if object is in bounds in the x direction
+          
+        }
+        
+        function isInBoundsY(object){
+          return object.y - object.radius > 0 && object.y + object.radius < camera.mapHeight; //return true if object is in bounds in the y direction
+        }
+        
+        function testFps(){ //a simple function to test the FPS of my program
+          var thisLoop = new Date();
+          var fps = 1000 / (thisLoop.getTime() - lastLoop.getTime());
+          lastLoop = thisLoop;
+          if(fps < 50){
+            console.log(fps);
+          }
+        }
+        
+        function splitPlayer(e){
+          var oldLength = playerArray.length;
+          if(e.keyCode == 32 && playerArray[0].canSplit){ //if spacebar pressed and player can split
+            for(var i = 0; i < oldLength; i++){ //add all of the new particles
+              playerArray.push({x: playerArray[i].x - playerArray[i].radius / 2, y: playerArray[i].y - playerArray[i].radius / 2, radius: Math.sqrt(Math.pow(playerArray[i].radius, 2) / 2), growTo: playerArray[i].growTo / 2, speed: playerArray[i].speed, canSplit: false}); //creates a new player object
+              playerArray.push({x: playerArray[i].x + playerArray[i].radius / 2, y: playerArray[i].y + playerArray[i].radius / 2, radius: Math.sqrt(Math.pow(playerArray[i].radius, 2) / 2), growTo: playerArray[i].growTo / 2, speed: playerArray[i].speed, canSplit: false}); //creates a new player object
+            }
+            playerArray.splice(0, oldLength); //new remove the old player objects that were split
+          }
+        }
+        
+        function keyUp(e){
+          for(var i = 0; i < playerArray.length; i++){ 
+            if(e.keyCode == 32){ //if we pressed the space bar
+              playerArray[i].canSplit = true; //make it so we can split again
+            }
+          }
+        }
+      </script>
+      
+      <style>
+        
+        html {
+          background-color: lightgray;
+        }
+        
+        canvas {
+          background-color: white;
+          outline: 1px solid black;
+        }
+        
+      </style>
+    </body>
+
+</html>

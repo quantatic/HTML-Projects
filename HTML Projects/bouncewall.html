@@ -1,0 +1,39 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <title>Bounce a Ball off the Wall</title>
+  </head>
+  
+  <body>
+    <canvas id="myCanvas" height="500" width="500">Get a Better Browser</canvas>
+    <script>
+      var balls = [];
+      function ball(x, y, angle){
+        this.x = x;
+        this.y = y;
+        this.angle = angle;
+        balls.push(this);
+      }
+      
+      var myBall = new ball(250, 250, 180);
+      
+      function draw(){
+        
+      }
+      
+    </script>
+    
+    <style>
+      html {
+        background-color: lightgray;
+      }
+      
+      canvas {
+        background-color: white;
+        outline: 1px solid black;
+      }
+    </style>
+  
+  </body>
+
+</html>

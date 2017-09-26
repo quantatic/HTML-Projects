@@ -1,0 +1,113 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>A Test of the Mouse</title>
+    </head>
+    
+    <body onload="init()">
+        <canvas id="myCanvas"></canvas>
+        <script>
+            var screenScale = 75;
+            var height = 9 * screenScale;
+            var width = 16 * screenScale;
+            var canvas = document.getElementById('myCanvas');
+            var ctx = canvas.getContext('2d');
+            var maxDistance = getDistance(0, 0, width, height);
+            canvas.height = height;
+            canvas.width = width;
+            
+            var mouse = {
+                x: 0,
+                y: 0
+            };
+            
+            var box = {
+                x: 100,
+                y: 100,
+                width: 100,
+                height: 100,
+                speed: 20
+            };
+            
+            function init(){
+                canvas.onmousemove = updateMouse;
+            }
+          
+            console.log(height.toString(16));
+            function step(){
+                updateBox();
+                draw();
+                blend();
+            }
+            
+            function updateMouse(e){
+                var rect = canvas.getBoundingClientRect();
+                mouse.x = e.clientX - rect.left;
+                mouse.y = e.clientY - rect.top;
+            }
+            
+            function getAngle(object){
+                var yOffset = (mouse.y - object.y) * -1; //multiply by -1 because y values are reversed
+                var xOffset = mouse.x - object.x;
+                var angle = Math.atan2(yOffset, xOffset);
+                return angle;
+            }
+            
+            function draw(){ //draws everything
+                var distance = getDistance(box.x, box.y, mouse.x, mouse.y);
+                ctx.strokeStyle = blend();
+                ctx.fillStyle = blend();
+                ctx.clearRect(0, 0, width, height);
+                ctx.fillRect(box.x - box.width / 2, box.y - box.height / 2, box.width, box.height);
+                ctx.strokeStyle = "green";
+                ctx.beginPath();
+                ctx.moveTo(box.x, box.y);
+                ctx.lineTo(mouse.x, mouse.y);
+                ctx.stroke();
+            }
+            
+            function updateBox(){
+                var angleBox = getAngle(box);
+                if(getDistance(box.x, box.y, mouse.x, mouse.y) > 5){
+                    box.x += Math.cos(angleBox) * box.speed * (getDistance(box.x, box.y, mouse.x, mouse.y) / maxDistance);
+                    box.y -= Math.sin(angleBox) * box.speed * (getDistance(box.x, box.y, mouse.x, mouse.y) / maxDistance); //reversed because y values are reversed
+                }
+            }
+            
+            function getDistance(x1, y1, x2, y2){
+                return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+            }
+          
+            function blend(){//blends between red and green for now
+                
+                var percentageRed = 1 - (getDistance(0, 0, box.x, box.y) / maxDistance);
+                var percentageGreen = 1 - (getDistance(0, height, box.x, box.y) / maxDistance);
+                var percentageBlue = 1 - (getDistance(width, height, box.x, box.y) / maxDistance);
+                var percentageBrightness = getDistance(0, height, box.x, box.y) / maxDistance;
+                var brightness = percentageBrightness * 3;
+                console.log(brightness);
+                var red = Math.floor(0xFF * percentageRed * brightness).toString(16);
+                var green = Math.floor(0xFF * percentageGreen * brightness).toString(16);
+                var blue = Math.floor(0xFF * percentageBlue * brightness).toString(16);
+
+                var color = (red.length == 1 ? "0" + red : red) + (green.length == 1 ? "0" + green : green) + (blue.length == 1 ? "0" + blue : blue);
+                return "#" + color;
+            }
+            
+            setInterval(function(){
+                step();
+            }, 1000 / 60);
+        </script>
+        
+        <style>
+            canvas {
+                background-color: white;
+                outline: 1px solid black;
+            }
+            
+            html {
+                background-color: lightgray;
+            }
+        </style>
+    </body>
+</html>

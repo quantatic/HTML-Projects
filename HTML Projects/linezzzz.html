@@ -1,0 +1,65 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>Draws Cool Lines(hopefully)</title>
+    </head>
+
+    <body>
+        <canvas id="myCanvas" width = "1000" height = "500">Get a new Browser</canvas>
+        <script>
+            var canvas = document.getElementById("myCanvas");
+            var ctx = canvas.getContext("2d");
+            var height = window.innerHeight - 32;
+            var width = window.innerWidth - 32;
+            document.getElementById("myCanvas").height = height;
+            document.getElementById("myCanvas").width = width;
+            var oldX = 250;
+            var oldY = 250;
+            
+            var x;
+            var y;
+            var theta;
+            var distance = 100;
+            
+            setInterval(drawLine, 10);
+            
+            function randomNumber(min, max){
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+            
+            function drawLine(){
+                ctx.beginPath();
+                ctx.strokeStyle = "rgb(" + randomNumber(0, 255) + "," + randomNumber(0, 255) + "," + randomNumber(0, 255) + ")";
+                do {
+                    theta = randomNumber(0, 360);
+                    x = oldX + (Math.cos(theta * Math.PI / 180) * distance);
+                    y = oldY + (Math.sin(theta * Math.PI / 180) * distance);
+                } while(x < 0 || x > width || y < 0 || y > height);
+                ctx.moveTo(oldX, oldY);
+                ctx.lineTo(x, y);
+                oldX = x;
+                oldY = y;
+                ctx.stroke();
+            }
+        
+        
+        </script>
+    
+        <style>
+
+            html {
+                background-color: lightgray;
+            }
+            
+            #myCanvas {
+                background-color: white;
+                border: 1px solid black;
+            }
+        
+        
+        </style>
+    
+    
+    </body>
+
+</html>

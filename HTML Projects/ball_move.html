@@ -1,0 +1,148 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <title>A ball rolling "game"</title>
+  </head>
+  
+  <body onload="init();">
+    <canvas id="myCanvas"></canvas>
+    
+    <script>
+    /******************************
+    * All variables that are used *
+    ******************************/
+      
+      var canvas;
+      var ctx;
+      var height;
+      var width; 
+      var ball;
+      var twoPI = Math.PI * 2; //used for drawing circles, also this way we only have to do the caluclation once
+      var keys;
+      var keyCodes;
+      var speed;
+      var fps;
+      
+      /*****************************************************
+      * Function that initializes all variables and canvas *
+      *****************************************************/
+      
+      function init(){
+        speed = 5;
+        fps = 60;
+        keys = {};
+        
+        keyCodes = { //this object stores all the needed keycodes for moving
+          "A": 65,
+          "D": 68,
+          "S": 83,
+          "W": 87,
+        };
+        
+        for(var i = 0; i < 127; i++){
+          keys[i] = false;
+        }
+        speed /= 10; //make the speed more reasonable
+        canvas = document.getElementById("myCanvas");
+        ctx = canvas.getContext('2d');
+        height = 800;
+        width = 1200;
+        ballRadius = 32;
+        ball = {
+          radius: ballRadius, //radius of the ball
+          color: "green", //color to draw the ball
+          x: width / 2, //x position of ball, 0 is left, width is right
+          y: height / 2, //y position of ball, 0 is top, height is bottom
+          xx: 0, //x velocity of ball, follows same coordinate plane as x
+          yy: 0 //y velocity of ball, follows same coordinate plane as y
+        };
+
+        canvas.height = height;
+        canvas.width = width;
+        setInterval(step, 1000 / fps); //this calls our step function 60 times a second
+      
+        window.addEventListener("keyup", keyUp);
+        window.addEventListener("keydown", keyDown);
+      }
+      
+      /*************************************
+      * Called when a user depresses a key *
+      *************************************/
+      
+      function keyDown(e){
+        keys[e.keyCode] = true;
+      }
+      
+      /*************************************************************
+      * Called when a user lets go of a key they were holding down *
+      *************************************************************/
+      
+      function keyUp(e){
+        keys[e.keyCode] = false;
+      }
+      
+      /*****************************************************
+      * Move function -- handles acceleration and movement *
+      *****************************************************/
+      
+      function move(){
+        ball.xx += (keys[keyCodes["D"]] - keys[keyCodes["A"]]) * speed + ball.xx / -100; //updates x velocity acording to key presses
+        ball.yy += (keys[keyCodes["S"]] - keys[keyCodes["W"]]) * speed + ball.yy / -100; //updates y velocity according to key presses
+        
+        ball.x += ball.xx; //updates x position according to x velocity
+        ball.y += ball.yy; //updates y position according to y velocity
+        
+        if(ball.x + ball.radius / 2 >= width){
+          ball.xx = Math.abs(ball.xx) * -1 / 2;
+          ball.x = width - ball.radius / 2;
+        }else if(ball.x - ball.radius / 2 <= 0){
+          ball.xx = Math.abs(ball.xx) * 1 / 2;
+          ball.x = ball.radius / 2;
+        }
+        
+        if(ball.y + ball.radius / 2 >= height){
+          ball.yy = Math.abs(ball.yy) * - 1 / 2;
+          ball.y = height - ball.radius / 2;
+        }else if(ball.y - ball.radius / 2 <= 0){
+          ball.yy = Math.abs(ball.yy) * 1 / 2;
+          ball.y = ball.radius / 2;
+        }
+      }
+      
+      /**************************************************************
+      * Draw function -- draws everything onto canvas (called last) *
+      **************************************************************/
+      
+      function draw(){
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = ball.color;
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.radius / 2, 0, twoPI);
+        ctx.fill();
+      }
+      
+      /*************************************
+      * Step function -- called every step *
+      *************************************/
+      
+      function step(){
+        move();
+        draw();
+      }
+    
+    </script>
+    
+    <style>
+      html {
+        background: lightgray;
+      }
+    
+      canvas {
+        background: white;
+        border: 1px solid black;
+      }
+    
+    </style>
+  
+  </body>
+</html>

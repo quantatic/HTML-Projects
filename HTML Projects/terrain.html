@@ -1,0 +1,73 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <title>A Simple Terrain Creator</title>
+  </head>
+  
+  <body>
+    <canvas id="myCanvas">Get a Better Browser!</canvas>
+    <script>
+      var canvas = document.getElementById("myCanvas");
+      var ctx = canvas.getContext('2d');
+      var offset = 0;
+      function generateTerrainMap(height, width, roughness){
+        var roundedWidth = Math.pow(2, Math.ceil(Math.log(width) / Math.log(2)));
+        console.log(roundedWidth);
+        canvas.height = height;
+        canvas.width = width;
+        var map = [];
+        var displacement = height / 4;
+        map[-1] = height;
+        map[0] = height / 2 + (Math.random() * displacement * 2) - displacement;
+        map[roundedWidth] = height / 2 + (Math.random() * displacement * 2) - displacement;
+        displacement *= roughness;
+        
+        for(var i = 1; i < roundedWidth; i *= 2){
+          for(var j = roundedWidth / i / 2; j < roundedWidth; j += roundedWidth / i){
+            map[j] = (map[j - roundedWidth / i / 2] + map[j + roundedWidth / i / 2]) / 2;
+            map[j] += (Math.random() * displacement * 2) - displacement;
+          }
+          displacement *= roughness;
+        }
+        return map;
+      }
+      
+      function drawTerrainMap(map){
+        ctx.beginPath();
+        ctx.moveTo(0, map[0]);
+        for(var i = 0; i < map.length; i++){
+          ctx.lineTo(i, map[i]);
+        }
+        ctx.stroke();
+      }
+      
+      function fillTerrainMap(map, color){
+        ctx.beginPath();
+        ctx.moveTo(0, map[0]);
+        for(var i = 0; i < map.length; i++){
+          ctx.lineTo(i, map[i]);
+        }
+        ctx.lineTo(map.length - 1, map[-1]);
+        ctx.lineTo(0, map[-1]);
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+      }
+      
+      var map = generateTerrainMap(200, 1024, 0.75);
+      fillTerrainMap(map, "green");
+    </script>
+    
+    <style>
+      html {
+        background-color: lightgray;
+      }
+      
+      canvas {
+        outline: 1px solid black;
+        background-color: white;
+      }    
+    </style>
+  </body>
+
+</html>

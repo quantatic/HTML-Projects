@@ -1,0 +1,110 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <title>A Ball Bouncing Simulation</title>
+  </head>
+  
+  <body>
+    <canvas id="myCanvas" height="500" width="500">Get a Better Browser!</canvas>
+    <script>
+      var canvas = document.getElementById("myCanvas");
+      //
+      var ctx = canvas.getContext('2d');
+      var height = 500;
+      //http://www.emanueleferonato.com/2007/08/19/managing-ball-vs-ball-collision-with-flash/
+      var width = 500;
+      canvas.height = height;
+      canvas.width = width;
+      var ballsList = [];
+      var twoPi = 2 * Math.PI;
+      var pi = Math.PI;
+      function Ball(x, y, angle, radius, color, speed){
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.mass = Math.pow(radius, 2) * pi;
+        this.color = color;
+        this.speed = speed;
+        this.nextVelocity = {x: Math.cos(angle * twoPi / 180) * speed, y: Math.sin(angle * twoPi / 180) * speed};
+        this.velocity = {x: Math.cos(angle * twoPi / 180) * speed, y: Math.sin(angle * twoPi / 180) * speed};
+      }
+      /******************** X, Y, Angle, Radius, Color, Speed *******************************************/
+      for(var i = 0; i < 10; i++){
+        ballsList.push(new Ball(Math.floor(Math.random() * (width - 59)), Math.floor(Math.random() * (height - 59)), Math.floor(Math.random() * 360), Math.floor(Math.random() * 40) + 10, "red", 2));
+      }
+
+      
+      function step(){
+        draw();
+        move();
+        calculateCollisions();
+      }
+      
+      function draw(){
+        var curBall;
+        ctx.clearRect(0, 0, width, height);
+        for(var i = 0; i < ballsList.length; i++){
+          curBall = ballsList[i];
+          ctx.fillStyle = curBall.color;
+          ctx.beginPath();
+          ctx.arc(curBall.x, curBall.y, curBall.radius, 0, twoPi);
+          ctx.fill();
+        }
+      }
+      
+      function move(){
+        for(var i = 0; i < ballsList.length; i++){
+          ballsList[i].velocity["x"] = ballsList[i].nextVelocity["x"];
+          ballsList[i].velocity["y"] = ballsList[i].nextVelocity["y"];
+          ballsList[i].x += ballsList[i].velocity["x"];
+          ballsList[i].y -= ballsList[i].velocity["y"];
+          if(ballsList[i].x - ballsList[i].radius < 0 || ballsList[i].x + ballsList[i].radius > width){
+            ballsList[i].nextVelocity["x"] = bounceHorizontal(ballsList[i].nextVelocity);
+          }
+          if(ballsList[i].y - ballsList[i].radius < 0 || ballsList[i].y + ballsList[i].radius > height){
+            ballsList[i].nextVelocity["y"] = bounceVertical(ballsList[i].nextVelocity);
+          }
+        }
+      }
+      
+      function bounceHorizontal(angle){
+        return angle["x"] * -1;
+      }
+      
+      function bounceVertical(angle){
+        return angle["y"] * -1;
+      }
+      
+      function calculateCollisions(){
+        for(var i = 0; i < ballsList.length; i++){
+          for(var j = 0; j < ballsList.length; j++){
+            if(i != j){
+              if(Math.sqrt(Math.pow(ballsList[i].x - ballsList[j].x, 2) + Math.pow(ballsList[i].y - ballsList[j].y, 2)) < ballsList[i].radius + ballsList[j].radius){
+                ballsList[i].color = "rgb(" + Math.floor(Math.random() * 255) + ", " + Math.floor(Math.random() * 255) + ", " + Math.floor(Math.random() * 255) + ")";
+                ballsList[i].nextVelocity["x"] = (ballsList[i].velocity["x"]*(ballsList[i].mass - ballsList[j].mass) + (2 * ballsList[j].mass * ballsList[j].velocity["x"]))/(ballsList[i].mass + ballsList[j].mass);
+                ballsList[i].nextVelocity["y"] = (ballsList[i].velocity["y"]*(ballsList[i].mass - ballsList[j].mass) + (2 * ballsList[j].mass * ballsList[j].velocity["y"]))/(ballsList[i].mass + ballsList[j].mass);
+                break;
+              }
+            }
+            //ballsList[i].color = "red";
+          }
+        }
+      }
+      
+      setInterval(step, 1000 / 120);
+    </script>
+    
+    <style>
+      html {
+        background-color: lightgray;
+      }
+      
+      canvas {
+        background-color: white;
+        outline: 1px solid black;
+      }
+      
+    </style>
+  </body>
+
+</html>

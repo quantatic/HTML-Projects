@@ -1,0 +1,374 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <title>A Simple Game Of Life</title>
+  </head>
+  
+  <body onload="init()">
+    <canvas id="myCanvas">Get a Better Browser</canvas>
+    <br>
+    <button onclick="start()">Start</button>
+    <button onclick="stop()">Stop</button>
+    <button onclick="stepAndStop()">Step</button>
+    <button onclick="reset()">Reset</button>
+    <button onclick="addGlider()">Add Glider</button>
+    <script>
+      var intervalAmount = 1; //interval between frames in Milliseconds
+      var canvas = document.getElementById("myCanvas");
+      var ctx = canvas.getContext('2d');
+      var drawGrid = true; //grid looks like shit if scale is less than 6
+      var loopSides = true;
+      var neighbors;
+      /*var curLifeArray = [
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+        [0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+      ]; //access in the form of: [row][column], also known as [y][x]*/ //NOT USED ANYMORE!
+      
+      var scale = 8;
+      var rows = 50; //row number is your Y variable, number of rows is Height
+      var cols = 50; //col number is your X variable, number of cols is your Width
+      var curLifeArray = new Array(rows);
+      for(var i = 0; i < rows; i++){
+        curLifeArray[i] = new Array(cols);
+        for(var j = 0; j < cols; j++){
+          if(Math.floor(Math.random() * 5) == 0){
+            curLifeArray[i][j] = 1;
+          }
+        }
+      }
+      var nextLifeArray = new Array(rows);
+      for(var i = 0; i < rows; i++){
+        nextLifeArray[i] = new Array(cols);
+      }
+      canvas.height = rows * scale;
+      canvas.width = cols * scale;
+      
+      function init(){
+        canvas.addEventListener("mousedown", addObject);
+        canvas.onmousedown = function(){
+          canvas.onmousemove = addObject;
+        };
+        canvas.onmouseup = function(){
+         canvas.onmousemove = null;
+        };
+        
+        canvas.onmouseout = function(){
+         canvas.onmousemove = null;
+        };
+        
+      }
+      draw();
+      function draw(){
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "red";
+        ctx.strokeStyle = "black";
+        for(var i = 0; i < rows; i++){
+          for(var j = 0; j < cols; j++){
+            if(curLifeArray[i][j] == 1){
+              ctx.fillRect(j * scale, i * scale, scale, scale);
+            }
+          }
+        }
+        if(drawGrid){
+          for(var i = 0; i < cols; i++){
+            ctx.beginPath();
+            ctx.moveTo(i * scale, 0);
+            ctx.lineTo(i * scale, rows * scale);
+            ctx.stroke();
+          }
+          for(var i = 0; i < rows; i++){
+            ctx.beginPath();
+            ctx.moveTo(0, i * scale);
+            ctx.lineTo(cols * scale, i * scale);
+            ctx.stroke();
+          }
+        }
+      }
+      var interval = null;
+      function getCells(x, y){
+        var checkUp = true;
+        var checkDown = true;
+        var checkRight = true;
+        var checkLeft = true;
+        var aliveNeighbors = 0;
+        if(x == 0){
+          checkLeft = false;
+          if(loopSides){
+            if(curLifeArray[y][cols - 1]){
+              aliveNeighbors++;
+            }
+          }
+        }
+        if(x == cols - 1){
+          checkRight = false;
+          if(loopSides){
+            if(curLifeArray[y][0]){
+              aliveNeighbors++;
+            }
+          }
+        }
+        if(y == 0){
+          checkUp = false;
+          if(loopSides){
+            if(curLifeArray[rows - 1][x]){
+              aliveNeighbors++;
+            }
+          }
+        }
+        if(y == rows - 1){
+          checkDown = false;
+          if(loopSides){
+            if(curLifeArray[0][x]){
+              aliveNeighbors++;
+            }
+          }
+        }
+        if(checkUp){
+          if(curLifeArray[y - 1][x]){
+            aliveNeighbors++;
+          }
+        }
+        if(checkDown){
+          if(curLifeArray[y + 1][x]){
+            aliveNeighbors++;
+          }
+        }
+        if(checkRight){
+          if(curLifeArray[y][x + 1]){
+            aliveNeighbors++;
+          }
+        }
+        if(checkLeft){
+          if(curLifeArray[y][x - 1]){
+            aliveNeighbors++;
+          }
+        }
+        if(checkUp && checkRight){
+          if(curLifeArray[y - 1][x + 1]){
+            aliveNeighbors++;
+          }
+        }
+        if(checkUp && checkLeft){
+          if(curLifeArray[y - 1][x - 1]){
+            aliveNeighbors++;
+          }
+        }
+        if(checkDown && checkRight){
+          if(curLifeArray[y + 1][x + 1]){
+            aliveNeighbors++;
+          }
+        }
+        if(checkDown && checkLeft){
+          if(curLifeArray[y + 1][x - 1]){
+            aliveNeighbors++;
+          }
+        }
+        if(loopSides){
+          if(!checkUp && checkLeft){
+            if(curLifeArray[rows - 1][x - 1]){
+             aliveNeighbors++;
+            }
+          }
+          if(!checkUp && checkRight){
+            if(curLifeArray[rows - 1][x + 1]){
+             aliveNeighbors++;
+            }
+          }
+          if(!checkDown && checkRight){
+            if(curLifeArray[0][x + 1]){
+              aliveNeighbors++;
+            }
+          }
+          if(!checkDown && checkLeft){
+            if(curLifeArray[0][x - 1]){
+              aliveNeighbors++;
+            }
+          }
+          if(!checkLeft && checkUp){
+            if(curLifeArray[y - 1][cols - 1]){
+              aliveNeighbors++;
+            }
+          }
+          if(!checkLeft && checkDown){
+            if(curLifeArray[y + 1][cols - 1]){
+              aliveNeighbors++;
+            }
+          }
+          if(!checkRight && checkUp){
+            if(curLifeArray[y - 1][0]){
+              aliveNeighbors++;
+            }
+          }
+          if(!checkRight && checkDown){
+            if(curLifeArray[y + 1][0]){
+              aliveNeighbors++;
+            }
+          }
+          if(!checkRight && !checkUp){
+            if(curLifeArray[rows - 1][0]){
+              aliveNeighbors++;
+            }
+          }
+          if(!checkRight && !checkDown){
+            if(curLifeArray[0][0]){
+              aliveNeighbors++;
+            }
+          }
+          if(!checkLeft && !checkUp){
+            if(curLifeArray[rows-1][cols-1]){
+              aliveNeighbors++;
+            }
+          }
+          if(!checkLeft & !checkDown){
+            if(curLifeArray[0][cols-1]){
+              aliveNeighbors++;
+            }
+          }
+        }
+        return aliveNeighbors;
+      }
+      
+      function updateNewCells(){
+        for(var rowNumber = 0; rowNumber < rows; rowNumber++){
+          for(var colNumber = 0; colNumber < cols; colNumber++){
+            neighbors = getCells(colNumber, rowNumber);
+            if(neighbors != 0){
+            }
+            if(neighbors < 2 || neighbors > 3){
+              nextLifeArray[rowNumber][colNumber] = 0;
+            }
+            if(neighbors == 3){
+              nextLifeArray[rowNumber][colNumber] = 1;
+            }
+            if(neighbors == 2 && curLifeArray[rowNumber][colNumber]){
+              nextLifeArray[rowNumber][colNumber] = 1;
+            }
+          }
+        }
+      }
+      
+      function copyCells(){
+        for(var rowNumber = 0; rowNumber < rows; rowNumber++){
+          for(var colNumber = 0; colNumber < cols; colNumber++){
+            curLifeArray[rowNumber][colNumber] = nextLifeArray[rowNumber][colNumber];
+          }
+        }
+      }
+      
+      function step(){
+        draw();
+        updateNewCells(); //updates all the cells on the canvas
+        copyCells(); //once all cells are analyzed, copies them over to the displayed array
+        draw(); //draws everything on the canvas
+      }
+      
+      function start(){
+        clearInterval(interval);
+        interval = setInterval(step, intervalAmount);
+      }
+      
+      function stepAndStop(){
+        stop();
+        step();
+      }
+      
+      function stop(){
+        clearInterval(interval);
+      }
+      
+      function reset(){
+      curLifeArray = new Array(rows);
+        for(var i = 0; i < rows; i++){
+          curLifeArray[i] = new Array(cols);
+        }
+        draw();
+      }
+      
+      function addObject(e){
+        e.preventDefault();
+        var x = Math.floor((e.pageX - 8) / scale);
+        var y = Math.floor((e.pageY - 8) / scale);
+        if(e.button == 0){
+        curLifeArray[y][x] = 1;
+        }
+        if(e.button == 2){
+          curLifeArray[y][x] = 0;
+        }
+        draw();
+      }
+      
+      function addGlider(){
+        var x;
+        var y;
+        var addIt;
+        while(true){
+          x = Math.floor(Math.random() * cols);
+          y = Math.floor(Math.random() * rows);
+          console.log(x, y);
+          addIt = true;
+          for(var i = x; i < x + 3; i++){
+            for(var j = y; j < y + 3; j++){
+              if(curLifeArray[j][i]){
+                addIt = false;
+              }
+            }
+          }
+          if(addIt){
+          curLifeArray[y][x + 1] = 1;
+          curLifeArray[y + 1][x + 2] = 1;
+          curLifeArray[y + 2][x] = 1;
+          curLifeArray[y + 2][x + 1] = 1;
+          curLifeArray[y + 2][x + 2] = 1;
+          draw();
+          return;
+          }
+        }
+      }
+    </script>
+  
+    <style>
+      body {
+        background-color: lightgray;
+      }
+      
+      #myCanvas {
+        background-color: white;
+        outline: 1px solid black;
+      }
+    
+    
+    </style>
+  
+  </body>
+
+
+
+</html>

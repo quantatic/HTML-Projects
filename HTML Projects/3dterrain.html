@@ -1,0 +1,74 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <title>3D Terrain Creator</title>
+  </head>
+  
+  <body>
+    <canvas id="myCanvas">Get a Better Browser</canvas>
+    
+    <script>
+      var resolution = 5;
+      var size = Math.pow(2, resolution) + 1;
+      var max = size - 1;
+      var map = new Array(size * size);
+      var roughness = 0.7;
+      
+      
+      function get(x, y){
+        if(x < 0 || y < 0 || x > max || y > max){
+          return -1;
+        }
+        return map[x + (y * size)];
+      }
+      
+      function set(x, y, value){
+          map[x + (y * size)] = value;
+      }
+      
+      function average(values){
+        var final = 0;
+        var number = 0;
+        for(var i = 0; i < 4; i++){
+          if(values[i] != -1){
+            final += values[i];
+            number++;
+          }
+        }
+        return final / number;
+      }
+      
+      set(0, 0, max);
+      set(max, 0, max / 2);
+      set(max, max, 0);
+      set(0, max, max / 2);
+      diamond(max / 2, max / 2, max / 2, (Math.random() * 2 * max * roughness) - max * roughness);
+      
+      function diamond(x, y, size, displacement){
+        var ave = average([
+          get(x - size, y - size),
+          get(x + size, y - size),
+          get(x - size, y + size),
+          get(x + size, y + size)
+        ]);
+        console.log(displacement);
+        set(x, y, ave + displacement);
+      }
+      
+    </script>
+    
+    <style>
+      html {
+        background-color: lightgray;
+      }
+      
+      canvas {
+        background-color: white;
+        outline: 1px solid black;
+      }
+    
+    </style>
+  </body>
+
+
+</html>

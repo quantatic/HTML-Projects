@@ -1,0 +1,229 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>An A* Algorithm</title>
+    </head>
+
+    <body onload="init()">
+        <canvas id="myCanvas">Get a better browser!</canvas>
+        <canvas id="fps"></canvas>
+        <script>
+            startCoords = [3, 10] //our start coordinates, in the form (x, y)
+            endCoords = [16, 10]; //our ending coordinates, in the form (x, y)
+            obstacles = [ //a 2d array of all of our obstacle objects, in the form (x, y) in each inner array
+                [10, 2],
+                [10, 3],
+                [10, 4],
+                [10, 5],
+                [10, 6],
+                [10, 7],
+                [10, 8],
+                [10, 9],
+                [10, 10],
+                [10, 11],
+                [10, 12],
+                [10, 13],
+                [10, 14],
+                [10, 15],
+                [10, 15],
+                [10, 16],
+                [10, 17],
+                [9, 17],
+                [9, 2],
+                [8, 2],
+                [7, 2],
+                [6, 2],
+                [5, 2],
+                [8, 17],
+                [7, 17],
+                [6, 17],
+                [5, 17],
+                [4, 17],
+                [3, 17],
+                [2, 17],
+                [1, 17],
+                [0, 17],
+                [4, 2],
+                [3, 2],
+                [2, 2],
+                [1, 2],
+            ];
+            rows = 20; //rows of our array
+            cols = 20; //columns of our array
+            scale = 20; //scale that our array is displayed
+            frameRate = 1000; //this is our framerate, interval is calculated by 1000/frameRate
+            height = rows * scale; //height of our canvas object
+            width = cols * scale; //width of our canvas object
+            canvas = document.getElementById("myCanvas"); 
+            ctx = canvas.getContext("2d");
+            fpsCanvas = document.getElementById("fps");
+            fps = fpsCanvas.getContext("2d");
+            canvas.height = height; //set the height and width of our canvas appropriately
+            canvas.width = width;
+            fpsCanvas.width = 100;
+            fpsCanvas.height = 100;
+            
+            function init(){
+                ctx.lineWidth = 1;
+                running = true;
+                lastTime = new Date().getTime();
+                map = new Array(rows); //accessed in the form: [y][x], also known as [row][column]
+                for(var i = 0; i < rows; i++){
+                    map[i] = new Array(cols)
+                    for(var j = 0; j < cols; j++){
+                        map[i][j] = {
+                            x: j, //x value of this object
+                            y: i, //y value of this object
+                            status: "empty", //what is this object?
+                            distance: Number.MAX_VALUE, //used for our pathrinding algorithm
+                            visited: false //have we visited this node yet? also used for pathfinding algorithm
+                        };
+                    }
+                }
+                start = map[startCoords[1]][startCoords[0]];
+                end = map[endCoords[1]][endCoords[0]];
+                map[start.y][start.x].status = "start";
+                map[start.y][start.x].distance = 0;
+                map[start.y][start.x].visited = true;
+                current = map[startCoords[1]][startCoords[0]];
+                map[end.y][end.x].status = "end";
+                for(var i = 0; i < obstacles.length; i++){
+                    if(inBounds(obstacles[i][0], obstacles[i][1])){
+                        map[obstacles[i][1]][obstacles[i][0]].status = "obstacle"; //set each coordinate in our map array as an obstacle, defined by our 2d array of obstacles
+                    }else{
+                        console.log("warning: your obstacle at: (" + obstacles[i][0] + ", " + obstacles[i][1] + ") is out of bounds.");
+                    }
+                }
+                step();
+            }
+            
+            function draw(){
+                ctx.clearRect(0, 0, width, height);
+                ctx.strokeStyle = "gray";
+                for(var i = 0; i < map.length; i++){ //i is our row, our y
+                    for(var j = 0; j < map[0].length; j++){ //j is our column, our x
+                        ctx.strokeRect(j * scale, i * scale, scale, scale);
+                        if(map[i][j].status == "start"){
+                            ctx.fillStyle = "green";
+                            ctx.fillRect(j * scale, i * scale, scale, scale);
+                        }else if(map[i][j].status == "end"){
+                            ctx.fillStyle = "red";
+                            ctx.fillRect(j * scale, i * scale, scale, scale);
+                        }else if(map[i][j].status == "obstacle"){
+                            ctx.fillStyle = "orange";
+                            ctx.fillRect(j * scale, i * scale, scale, scale);
+                        }else if(map[i][j].visited){ //if we've already visited this node
+                            ctx.fillStyle = "#CCCCCC";
+                            ctx.fillRect(j * scale, i * scale, scale, scale);
+                        }
+                    }
+                }
+            }
+            
+            function drawFps(){
+                fps.strokeStyle = "red";
+                fps.clearRect(0, 0, fpsCanvas.width, fpsCanvas.height);
+                thisTime = new Date().getTime();
+                fps.strokeText("fps: " + (1000) / (thisTime - lastTime), 1, 10);
+                lastTime = thisTime;
+            }
+            
+            function pathFind(){
+                for(var dx = -1; dx <= 1; dx += 1){
+                    for(var dy = -1; dy <= 1; dy += 1){
+                        if(inBounds(current.x + dx, current.y + dy) && !map[current.y + dy][current.x + dx].visited){
+                            if(current.distance + (Math.abs(current.x - map[current.y + dy][current.x + dx].x) + Math.abs(current.y - map[current.y + dy][current.x + dx].y)) < map[current.y + dy][current.x + dx].distance){
+                                map[current.y + dy][current.x + dx].distance = current.distance + (Math.abs(current.x - map[current.y + dy][current.x + dx].x) + Math.abs(current.y - map[current.y + dy][current.x + dx].y));
+                                map[current.y + dy][current.x + dx].parent = current;
+                            }
+                            if(map[current.y + dy][current.x + dx].status == "end"){
+                                pathFound();
+                            }
+                        }
+                    }
+                }
+                var smallestDistance = Number.MAX_VALUE;
+                for(var i = 0; i < map.length; i++){ //i is our y
+                    for(var j = 0; j < map[0].length; j++){ //j is our x
+                        if(map[i][j].distance < smallestDistance && !map[i][j].visited){
+                            smallestDistance = map[i][j].distance;
+                            current = map[i][j];
+                        }
+                    }
+                }
+                if(current.visited == true){
+                            console.log("warning: no found path!");
+                        }
+                current.visited = true; //we want to set the node that we have just tested as already visisted
+            }
+            
+            function inBounds(x, y){ //checks if the passed node object is in bounds
+                if(x >= 0 && x < cols && y >= 0 && y < rows && map[y][x].status != "obstacle"){ //if we're in bounds
+                    return true; //return true if in bounds
+                }
+                return false; //if not in bounds, return false
+            }
+            
+            function pathFound(){
+                draw();
+                ctx.beginPath();
+                running = false;
+                var myPath = [end];
+                while(myPath[0].status != "start"){
+                    myPath.unshift(myPath[0].parent);
+                }
+                ctx.strokeStyle = "purple";
+                ctx.moveTo(myPath[0].x * scale + scale / 2, myPath[0].y * scale + scale / 2)
+                for(var i = 0; i < myPath.length; i++){
+                    ctx.lineTo(myPath[i].x * scale + scale / 2, myPath[i].y * scale + scale / 2);
+                    console.log(myPath.length);
+                }
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
+            
+            function step(){
+                pathFind();
+                drawFps();
+                if(running){
+                    step();  
+                }
+            }
+            
+            var i = 11; //our x variable
+            var j = 2; //our y variable
+            myInterval = setInterval(function(){
+                i++;
+                if(i > 19){
+                    i = 11;
+                    j++;
+                }
+                endCoords = [i, j];
+                if(inBounds(i, j)){
+                    init();
+                }
+                if(j > 15){
+                    clearInterval(myInterval);
+                }
+            }, 100);
+        
+        </script>
+    
+    
+        <style>
+            html {
+                background-color: lightgray;
+            }
+            
+            canvas {
+                background-color: white;
+                outline: 1px solid black;
+            }
+            
+            #fps {
+                vertical-align: top;
+            }
+        
+        </style>
+    </body>
+</html>

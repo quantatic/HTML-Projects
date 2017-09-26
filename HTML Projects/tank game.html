@@ -1,0 +1,173 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>My Tank Game</title>
+    </head>
+    
+    <body>
+        <canvas id="tank" width = "500" height = "500">Get a browser that isn't literally 10 years old please</canvas>
+        <script>
+            /*
+            Todo
+            Fix the firing mechanism, make the bullets come directly out of the shooting section of the tank. Use angles? I'll figure it out eventually
+            Add more shit to do here
+            */
+            var canvas = document.getElementById("tank");
+            var ctx = canvas.getContext("2d");
+            var playerX = 250;
+            var playerY = 250;
+            var playerHeight = 30;
+            var playerWidth = 30;
+            var bulletSize = 3;
+            var windowHeight = document.getElementById("tank").height;
+            var windowWidth = document.getElementById("tank").width;
+            var keyState = [];
+            var moveSpeed = 1;
+            var bulletSpeed = 0.5;
+            var playerAngle = 0;
+            var i; //looping variable
+            var bullets = []; //the array of all the bullet objects
+            var time;
+            var frames;
+            var seconds;
+            
+            
+            document.body.addEventListener("keydown", checkKeyDown, true);
+            document.body.addEventListener("keyup", checkKeyUp, true);
+            setInterval(step, 1); //calls the draw function once every 50 ms
+            
+            function draw(){ //draws everything in the Canvas
+                ctx.clearRect(0, 0, windowWidth, windowHeight);
+                ctx.fillStyle = "green"
+                ctx.save();
+                ctx.translate(playerX + playerWidth * 0.5, playerY + playerHeight * 0.5);
+                ctx.rotate(convertToRadians(playerAngle));
+                ctx.translate(-(playerX + playerWidth * 0.5), -(playerY + playerHeight * 0.5));
+                ctx.fillRect(playerX, playerY, playerWidth, playerHeight);
+                ctx.fillStyle = "black";
+                ctx.fillRect(playerX + playerWidth * 0.375, playerY - (playerHeight / 2), playerWidth * 0.25, playerHeight);
+                ctx.restore();
+                ctx.fillStyle = "red";
+                for(i = 0; i < bullets.length; i++){
+                    ctx.fillRect(bullets[i].x, bullets[i].y, bulletSize, bulletSize);   
+                }
+            } 
+            
+            function checkKeyDown(e){ //once key pressed, sets that array value to true
+                keyState[e.keyCode] = true;
+            }
+            
+            function convertToRadians(angle){
+                //console.log("Converting " + playerAngle + " to:" + (angle * Math.PI)/180); //strictly for debugging purposes
+                return (angle * Math.PI) / 180;
+            }
+            
+            function convertToDegrees(angle){
+                return (angle * 180) / Math.PI;   
+            }
+            
+            function checkKeyUp(e){ //once key released, sets that array value to false
+                keyState[e.keyCode] = false;    
+            }
+            
+            function move(){
+                if(keyState[87]){ //if W
+                    playerY -= moveSpeed * Math.cos(convertToRadians(playerAngle));
+                    playerX += moveSpeed * Math.sin(convertToRadians(playerAngle));
+                }
+                if(keyState[83]){ //if S
+                    playerY += moveSpeed * Math.cos(convertToRadians(playerAngle));
+                    playerX -= moveSpeed * Math.sin(convertToRadians(playerAngle));
+                }
+                if(keyState[65]){ //if A pressed
+                    playerAngle--;
+                }
+                if(keyState[68]){ //if D pressed
+                    playerAngle++;
+                }
+                if(playerX < 0){
+                    playerX = windowWidth; //if you're off the top of the screen, move you to the bottom
+                }
+                if(playerX > windowWidth){ //if you're off the bottom of the screen, move you to the top
+                    playerX = 0;
+                }
+                if(playerY < 0){ //if you're of the left of the screen, move you to the right
+                    playerY = windowHeight;
+                }
+                if(playerY > windowHeight){ //if you're off the right of the screen, move you to the left
+                    playerY = 0;
+                }
+                    
+            }
+            
+            function shoot(){
+                if(keyState[32]){ //see if space is being pressed
+                    
+                        for(i = 0; i < bullets.length; i++){ //loop through entire bullet array
+                            if(bullets[i] == -1){
+                                bullets[i] = new bullet();
+                                break;
+                            }
+                        }
+                        if(i == bullets.length){
+                            bullets.push(new bullet());
+                        }
+                }
+            }
+            
+            function moveBullets(){
+                for(i = 0; i < bullets.length; i++){
+                    if(bullets[i] != -1){
+                        bullets[i].y -= bulletSpeed * Math.cos(convertToRadians(bullets[i].angle));
+                        bullets[i].x += bulletSpeed * Math.sin(convertToRadians(bullets[i].angle));
+                        /*if(bullets[i].x > windowWidth || bullets[i].x < 0 || bullets[i].y > windowHeight || bullets[i].y < 0){
+                            bullets[i] = -1; 
+                            
+                        }*/
+                        if(bullets[i].x <= 0 || bullets[i].x >= windowWidth){ //if off left or right of screen\
+                            bullets[i].angle = convertToDegrees(Math.atan2(-Math.sin(convertToRadians(bullets[i].angle)), Math.cos(convertToRadians(bullets[i].angle))));
+                        }
+                        
+                        if(bullets[i].y < 0 || bullets[i].y > windowHeight){ //if off top or bottom of screen
+                           bullets[i].angle = convertToDegrees(Math.atan2(Math.sin(convertToRadians(bullets[i].angle)), -Math.cos(convertToRadians(bullets[i].angle))));
+                        }
+                    }
+                }
+            }
+            
+            function step(){ //called (hypothetically), once a time step. Takes care of everything
+                draw();
+                move();
+                shoot();
+                moveBullets();
+                //getFrames();
+                //console.log(Math.atan2(Math.sin(Math.PI/4), Math.cos(Math.PI/4)));
+            }
+                
+            function bullet(){ //the constructor for a new bullet
+                this.x = (playerX + (playerWidth)/2) + (playerHeight * Math.sin(convertToRadians(playerAngle)));
+                this.y = (playerY + (playerHeight)/2) - (playerWidth * Math.cos(convertToRadians(playerAngle)));
+                this.angle = (playerAngle % 360) /*+ randomNumber(-30, 30)*/;
+            }
+            
+            function randomNumber(min, max){
+                    return Math.floor((Math.random() * (max - min)) + min);
+            }
+            
+            
+            
+                
+        </script>
+        
+        <style>
+            html {
+                background-color: lightgray;
+            }
+            
+            canvas {
+                border: 1px solid black;
+                background-color: white;
+            }
+        </style>
+    </body>
+</html>

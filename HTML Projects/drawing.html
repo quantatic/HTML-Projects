@@ -1,0 +1,77 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>A Drawing Canvas</title>
+    </head>
+    
+    <body>
+        <canvas id="myCanvas" height="512" width="512">Get a better browser</canvas>
+        <button id="clear" onclick="clearCanvas();">Clear that Shit</button>
+        <script>
+            var drawSize = 32;
+            document.getElementById("myCanvas").height -= document.getElementById("myCanvas").height % drawSize; //regulates proper window height
+            document.getElementById("myCanvas").width -= document.getElementById("myCanvas").width % drawSize; //regulates proper window width
+            var height = document.getElementById("myCanvas").height;
+            var width = document.getElementById("myCanvas").width;
+            var i; //looping variable
+            var j; //another looping variable
+            var tempArray;
+            var array = [];
+            
+            var mouseDown = false;
+            
+            var canvas = document.getElementById("myCanvas");
+            var ctx = canvas.getContext("2d");
+            ctx.fillStyle = "green";
+            
+            
+            clearCanvas();
+            
+            canvas.addEventListener("mousemove", function(e){
+                if(mouseDown){
+                    
+                    ctx.fillStyle = randomColor();
+                    ctx.fillRect(Math.floor(e.clientX / drawSize) * drawSize, Math.floor(e.clientY / drawSize) * drawSize, drawSize, drawSize);
+                }
+            });
+            
+            canvas.addEventListener("mouseup", function(e){
+                if(mouseDown){
+                    mouseDown = false;
+                }else{
+                    mouseDown = true;
+                }
+            });
+        
+        
+            function randomColor(){
+                return "rgb(" + randomNumber(0, 255) + "," + randomNumber(0, 255) + "," + randomNumber(0, 255) + ")";
+            }
+                
+            function randomNumber(min, max){
+                return Math.floor((Math.random() * (max - min + 1)) + min);
+            }
+            
+            function clearCanvas(){
+                ctx.clearRect(0, 0, width, height);
+            }
+        </script>
+        
+        <style>
+            html {
+                background-color: lightgray;
+            }
+            
+            canvas {
+                background-color: white;
+/*                outline: 1px solid black;*/
+            }
+            
+            button {
+                position: absolute;
+                top: 0px;
+                margin: 20px;
+            }
+        </style>
+    </body>
+</html>

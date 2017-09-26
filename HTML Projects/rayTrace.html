@@ -1,0 +1,213 @@
+<html>
+  <head>
+    <title>A Simple Raytracer?</title>
+  </head>
+
+  <body>
+    <canvas id="myCanvas">Get a Better Browser!</canvas>
+    
+    
+    <script>
+      var speed = 0.09;
+      var canvas = document.getElementById("myCanvas");
+      var ctx = canvas.getContext('2d');
+      
+      var scale = 32;
+      var twoPi = 2 * Math.PI;
+      var playerDir = 0;
+      var keysPressed = [];
+      var resolution = 0.2;
+      var fov = 360;
+      window.addEventListener("keydown", checkKeyDown);
+      window.addEventListener("keyup", checkKeyUp);
+      //setInterval(step, 1000/60);
+      
+      /************ access in the form of map[y][x] **************/
+      var map = 
+        [[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1], //Map is flipped over Y axis ---- RIP
+         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,1],
+         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+         [1,0,0,0,0,0,0,0,2,2,2,0,0,0,0,0,0,0,0,1],
+         [1,0,0,0,0,0,0,0,2,0,2,0,0,0,0,0,0,0,0,1],
+         [1,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,0,1],
+         [1,0,0,0,0,0,2,2,2,0,0,0,0,0,0,2,0,0,0,1],
+         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+         [1,0,0,0,0,0,0,0,0,2,0,0,0,0,0,0,0,0,0,1],
+         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,0,1],
+         [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]];
+      var height = map.length;
+      var width = map[0].length;
+      canvas.width = width * scale;
+      canvas.height = height * scale;
+      var playerX = (width) / 2;
+      var playerY = (height) / 2;
+      
+      function step(){
+        movePlayer();
+        draw();
+        //drawRay(playerDir);
+        drawRays();
+        ctx.strokeStyle = "green";
+        ctx.beginPath();
+        ctx.moveTo(playerX * scale, playerY * scale);
+        ctx.lineTo(scale * (playerX + (Math.cos(playerDir * Math.PI / 180))), scale * (playerY - (Math.sin(playerDir * Math.PI / 180))));
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(scale * (playerX + (Math.cos(playerDir * Math.PI / 180))),  scale * (playerY - (Math.sin(playerDir * Math.PI / 180))), 2, 0, twoPi);
+        ctx.fill();
+        window.requestAnimationFrame(step);
+      }
+      
+      function movePlayer(){
+        var tempY = playerY;
+        var tempX = playerX;
+        if(keysPressed[87]){
+          tempY -= Math.sin(playerDir * Math.PI / 180) * speed;
+          tempX += Math.cos(playerDir * Math.PI / 180) * speed;
+        }
+        if(keysPressed[83]){
+          tempY += Math.sin(playerDir * Math.PI / 180) * speed;
+          tempX -= Math.cos(playerDir * Math.PI / 180) * speed;
+        }
+        if(keysPressed[68]){
+          playerDir -= 3; 
+        }
+        if(keysPressed[65]){
+          playerDir += 3;  
+        }
+        if(canMoveTo(tempX, tempY)){
+          playerY = tempY;
+          playerX = tempX;
+        }
+      }
+      
+      function draw(){
+        ctx.clearRect(0, 0, width * scale, height * scale);
+        ctx.fillStyle = "gray";
+        for(var heightCounter = 0; heightCounter < map.length; heightCounter++){ //controls placing of blocks and of player
+          for(var widthCounter = 0; widthCounter < map[0].length; widthCounter++){
+            if(map[heightCounter][widthCounter] != 0){
+              ctx.fillRect(widthCounter * scale, heightCounter * scale, scale, scale);
+            }
+          }
+        }
+        ctx.fillStyle = "black";
+        ctx.fillRect(playerX * scale - 2, playerY * scale - 2, 4, 4);
+      }
+      
+      function drawRays(){
+        for(var i = playerDir - (fov / 2); i < playerDir + (fov / 2); i += resolution){
+          drawRay(i);  
+        }
+        
+      }
+      function drawRay(angle){
+        var color;
+        angle = angle * Math.PI / 180;
+        angle = angle % twoPi;
+        if(angle < 0){
+          angle += twoPi;  
+        }
+        var xTest = playerX;
+        var yTest = playerY;
+        var xHit;
+        var yHit;
+        var wallX;
+        var wallY;
+        var sinAngle = Math.sin(angle);
+        var cosAngle = Math.cos(angle);
+        
+      
+        var up = (angle > 0 && angle < Math.PI);
+        var right = (angle > 3 * Math.PI / 2 || angle < Math.PI / 2);
+        /******* Check for Vertical Intersections: use dy ********/
+        var slope = sinAngle / cosAngle;
+        var dx = right ? 1 : -1;
+        var dy = -1 * slope * dx;
+        var dist = Number.MAX_VALUE;
+        xTest = right ? Math.ceil(playerX) : Math.floor(playerX);
+        yTest = playerY + (playerX - xTest) * slope;
+        while(xTest > 0 && xTest < width && yTest > 0 && yTest < height){
+          wallX = right ? xTest : xTest - 1;
+          wallY = Math.floor(yTest);
+          if(map[wallY][wallX] > 0){
+            xHit = xTest;
+            yHit = yTest
+            dist = Math.pow((playerX - xTest), 2) + Math.pow((playerY - yTest), 2);
+            break;
+          }
+          xTest += dx;
+          yTest += dy;
+        }
+         /***** Check for Horizontal Intersections: use dx *******/
+        dy = up ? -1 : 1;
+        dx = 1 / -slope * dy;
+        yTest = up ? Math.floor(playerY) : Math.ceil(playerY);
+        xTest = playerX + (playerY - yTest) * (1 / slope);
+        while(xTest > 0 && xTest < width && yTest > 0 && yTest < height){
+          wallX = Math.floor(xTest);
+          wallY = up ? yTest - 1 : yTest;
+          if(map[wallY][wallX] > 0){
+            if(Math.pow((playerX - xTest), 2) + Math.pow((playerY - yTest), 2) < dist){
+              xHit = xTest;
+              yHit = yTest;
+            }
+            break;
+          }
+          xTest += dx;
+          yTest += dy;
+        }
+        ctx.beginPath();
+        ctx.strokeStyle = "red";
+        ctx.moveTo(playerX * scale, playerY * scale);
+        ctx.lineTo(xHit * scale, yHit * scale);
+        ctx.stroke();
+      }
+      
+      function checkKeyDown(e){
+        keysPressed[e.keyCode] = true;
+      }
+      
+      function checkKeyUp(e){
+        keysPressed[e.keyCode] = false;
+      }
+      
+      function canMoveTo(x, y){
+        if(map[Math.floor(y)][Math.floor(x)] > 0){
+          return false;
+        }
+        return true;
+        
+      }
+      
+      window.requestAnimationFrame(step);
+    </script>
+  
+  
+    <style>
+      html {
+        background-color: lightgray;
+      }
+      
+      canvas {
+        background-color: white;
+        border: 1px solid black;
+      }
+    
+    
+    </style>
+  
+  
+  </body>
+
+
+</html>

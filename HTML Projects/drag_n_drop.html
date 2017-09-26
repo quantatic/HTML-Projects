@@ -1,0 +1,95 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>A Drag and Drop Test</title>
+    </head>
+    
+    <body>
+        <canvas id="drag_n_drop" width = "500" height = "500">Get a new browser</canvas>
+        <script>
+            var canvas = document.getElementById("drag_n_drop");
+            var windowHeight = document.getElementById("drag_n_drop").height;
+            var windowWidth = document.getElementById("drag_n_drop").width;
+            var ctx = canvas.getContext("2d");
+            var date;
+            var lastDate = new Date();
+            var steps = 0;
+            var fps = 0;
+            var objX = 0; //top left corner of object
+            var objY = 0; //top left corner of object
+            var mouseIn;
+            canvas.addEventListener("mousedown", mouseClicked, false);
+            canvas.addEventListener("mouseup", mouseUnclicked, false);
+            canvas.addEventListener("mousemove", mouseMoved, false);
+            
+            
+            setInterval(step, 10);
+            function step(){
+                draw();
+                tick();
+            }
+            
+            function tick(){
+                date = new Date();
+                if(date.getSeconds() == lastDate.getSeconds()){
+                    steps++;    
+                }else{
+                    lastDate = new Date();
+                    fps = steps;
+                    steps = 0;
+                }
+            }
+            
+            function draw(){
+                ctx.clearRect(0, 0, windowWidth, windowHeight);
+                ctx.fillStyle = "black";
+                ctx.font = "16px Arial";
+                if(mouseIn){
+                    ctx.fillText("(" + objX + "," + objY + ")", 0, 16);
+                }else{
+                    ctx.fillText(fps.toString(), 0, 16);
+                }
+                ctx.fillStyle = "green";
+                ctx.fillRect(objX, objY, 32, 32);
+               
+            }
+            
+            function randomNumber(min, max){
+                return (Math.random() * (max - min)) + min;    
+            }
+            
+            function mouseClicked(e){
+                if(e.clientX >= objX + 8 && e.clientX <= (objX + 40) && e.clientY >= objY + 8 && e.clientY<= (objY + 40)){
+                    mouseIn = true;
+                    objX = e.clientX - 24;
+                    objY = e.clientY - 24;
+                }
+            }
+            
+            function mouseUnclicked(e){
+                mouseIn = false;
+            }
+                
+            function mouseMoved(e){
+                if(mouseIn){
+                    objX = e.clientX - 24;
+                    objY = e.clientY - 24;
+                }
+            }
+            
+            
+        </script>
+        <style>
+            html {
+                background-color: lightgray;
+            }
+            
+            canvas {
+                border: 1px solid black;
+                background-color: white;
+            }
+        </style>
+        
+        
+    </body>
+</html>

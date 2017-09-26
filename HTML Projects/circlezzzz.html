@@ -1,0 +1,114 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>Draws Circles Probably</title>
+    </head>
+    
+    <body>
+        
+        <canvas id="myCanvas" height="750" width="750">Get a Better Brower</canvas>
+        <div id="textField">
+                <button onclick="new function() {circles = [];}">Clear Dat Stuff</button>
+            </div>
+
+        <script>
+            var canvas = document.getElementById("myCanvas");
+            var ctx = canvas.getContext("2d");
+            var startX = 250;
+            var startY = 250;
+            var size = 200;
+            var currSize = 0
+            var i;
+            var j;
+            var circles = [];
+            ctx.fillStyle = "blue";
+            var date = new Date();
+            var frames = 0;
+            var fps = 0;
+            var height = document.getElementById("myCanvas").height;
+            var width = document.getElementById("myCanvas").width;
+            
+            setInterval(step, 25);    
+            setInterval(addCircle, 1);
+            
+            
+            function randomNumber(min, max){
+                return Math.floor(Math.random() * (max - min + 1)) + min; 
+            }
+            
+            function randomColor(){
+                //var number = randomNumber(0, 255);
+                return "rgb(" + randomNumber(0, 255) + "," + randomNumber(0, 255) + "," + randomNumber(0, 255) + ")";
+//                switch(randomNumber(1, 3)){
+//                    case 1:
+//                        return "rgb(" + number + "," + 0 + "," + 0 + ")";
+//                        break;
+//                    case 2:
+//                        return "rgb(" + 0 + "," + number + "," + 0 + ")";
+//                        break;
+//                    case 3:
+//                        return "rgb(" + 0 + "," + 0 + "," + number + ")";
+//                        break;
+//                }
+            }
+            
+            function step(){
+                ctx.clearRect(0, 0, width, height);
+                for(i = 0; i < circles.length; i++){
+                    if(circles[i] != null){
+                        ctx.fillStyle = circles[i].color;
+                        ctx.beginPath();
+                        ctx.arc(circles[i].x, circles[i].y, circles[i].size, 0, 2 * Math.PI);
+                        ctx.fill();
+                        if(circles[i].size++ > 150){
+                            circles.splice(i, 1);
+                            i--; //added to fix skipping over circles
+                        }
+                    }
+                }
+                if(new Date().getSeconds() != date.getSeconds()){
+                    fps = frames;
+                    frames = 0;
+                    date = new Date();
+                }else{
+                    frames++;
+                }
+                ctx.fillStyle = "black";
+                ctx.fillText(fps, 16, 16)
+            }
+            
+            function circle(){
+                this.x = randomNumber(0, width);
+                this.y = randomNumber(0, height);
+                this.color = randomColor();
+                this.size = 1;
+            }
+            
+            function addCircle(){
+                circles.push(new circle());
+            }
+            
+        </script>
+        
+        <style>
+            html {
+                background-color: lightgray;
+            }
+            
+            canvas {
+                background-color: white;
+                border: 1px solid black;
+            }
+            
+            #textField {
+                position: fixed;
+                top: 50px;
+                left: 800px
+                
+            }
+            
+        
+        </style>
+    </body>
+
+</html>
